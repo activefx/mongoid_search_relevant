@@ -5,11 +5,12 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 describe Mongoid::Search do
   
   before(:each) do
-    @product = Product.create :brand => "Apple",
+    @product = Product.create :brand => "<p><span>Apple</span><p>",
                               :name => "iPhone",
                               :tags => ["Amazing", "Awesome", "Olé"].map { |tag| Tag.new(:name => tag) },
                               :category => Category.new(:name => "Mobile"),
-                              :subproducts => [Subproduct.new(:brand => "Apple", :name => "Craddle")]
+                              #:subproducts => [Subproduct.new(:brand => "Apple", :name => "Craddle")]
+                              :subproducts => [Subproduct.new(:name => "Craddle")]
   end
   
   it "should set the _keywords field" do
