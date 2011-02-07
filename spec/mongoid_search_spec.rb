@@ -9,8 +9,7 @@ describe Mongoid::Search do
                               :name => "iPhone",
                               :tags => ["Amazing", "Awesome", "Olé"].map { |tag| Tag.new(:name => tag) },
                               :category => Category.new(:name => "Mobile"),
-                              #:subproducts => [Subproduct.new(:brand => "Apple", :name => "Craddle")]
-                              :subproducts => [Subproduct.new(:name => "Craddle")]
+                              :subproducts => [Subproduct.new(:brand => "Apple", :name => "Craddle")]
   end
   
   context "utf-8 characters" do
