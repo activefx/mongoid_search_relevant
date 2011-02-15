@@ -1,10 +1,10 @@
 module Mongoid::Search
   extend ActiveSupport::Concern
-  
+
   included do
     cattr_accessor :search_fields, :match, :allow_empty_search
   end
-  
+
   module ClassMethods #:nodoc:
     # Set a field or a number of fields as sources for search
     def search_in(*args)
@@ -15,20 +15,24 @@ module Mongoid::Search
 
       field :_keywords, :type => Array
       index :_keywords
-      
+
       before_save :set_keywords
     end
-    
+
     def search(query, options={})
       return self.all if query.blank? && allow_empty_search
-      self.send("#{(options[:match]||self.match).to_s}_in", :_keywords => KeywordsExtractor.extract(query).map { |q| /#{q}/ })
+      cursor = self.send("#{(options[:match]||self.match).to_s}_in", :_keywords => KeywordsExtractor.extract(query).map { |q| /#{q}/ })
+      unless options[:conditions].nil? || options[:conditions].empty?
+        cursor = cursor.where(options[:conditions])
+      end
+      cursor
     end
-    
+
     def search_relevant(query, options={})
       return self.all if query.blank? && allow_empty_search
-      
+
       keywords = KeywordsExtractor.extract(query)
-      
+
       map = <<-EOS
         function() {
           var entries = 0
@@ -46,27 +50,27 @@ module Mongoid::Search
           return(values[0])
         }
       EOS
-  
+
       #raise [self.class, self.inspect].inspect
-      
+
       kw_conditions = keywords.map do |kw|
         {:_keywords => kw}
       end
-      
+
       criteria = self.any_of(*kw_conditions)
-      
+
       query = criteria.selector
 
       options.delete(:limit)
       options.delete(:skip)
       options.merge! :scope => {:keywords => keywords}, :query => query
-               
+
       res = collection.map_reduce(map, reduce, options)
 
       res.find.sort(['value', -1]) # Cursor
     end
   end
-  
+
   private
 
   # TODO: This need some refatoring..
@@ -92,3 +96,4 @@ module Mongoid::Search
     end.flatten.compact.sort
   end
 end
+
